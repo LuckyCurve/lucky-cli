@@ -18,10 +18,14 @@ struct Cli {
 
 #[derive(Parser, Debug)]
 enum Command {
+    /// get current machine ip, including all derives ip
     IP,
+    /// get current machine infomation
     System,
+    /// 
     #[clap(subcommand)]
     Website(WebsiteCommand),
+    /// 
     Proxy,
 }
 
@@ -42,7 +46,7 @@ enum WebsiteCommand {
 
 impl WebsiteCommand {
     pub async fn execute(&self) {
-        let mut config = Config::load().unwrap_or_else(|_| Config::default());
+        let mut config = Config::load().await.unwrap_or_else(|_| Config::default());
 
         println!("================ {} ================", "WEBSITE".blue());
 
