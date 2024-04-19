@@ -22,10 +22,10 @@ enum Command {
     IP,
     /// get current machine infomation
     System,
-    /// 
+    ///
     #[clap(subcommand)]
     Website(WebsiteCommand),
-    /// 
+    ///
     Proxy,
 }
 
@@ -164,6 +164,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_main() {
-        Command::System.execute().await
+        Command::Website(crate::WebsiteCommand::Add {
+            url: "http://www.baidu,com".to_string(),
+        })
+        .execute().await;
     }
 }

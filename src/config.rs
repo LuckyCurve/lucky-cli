@@ -5,24 +5,27 @@ use std::io::{BufReader, BufWriter};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
+use crate::system;
+
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Config {
     pub website: Vec<String>,
 }
 
 impl Config {
-    const PATH: &'static str = "config/";
+    const PATH: &'static str = "lucky-config/";
     const FILENAME: &'static str = "global.json";
 
     pub async fn load() -> Result<Config> {
-        let file = File::open(Self::PATH.to_owned() + Self::FILENAME)?;
+        let file = File::open(system::get_current_user_home_dir() + Self::PATH + Self::FILENAME)?;
         let result: Config = serde_json::from_reader(BufReader::new(file))?;
         Ok(result)
     }
 
     pub fn save(&self) -> Result<()> {
-        fs::create_dir_all(Self::PATH)?;
-        let file = File::create(Self::PATH.to_owned() + Self::FILENAME)?;
+        let home_dir = system::get_current_user_home_dir();
+        fs::create_dir_all(home_dir.clone() + Self::PATH)?;
+        let file = File::create(home_dir + Self::PATH + Self::FILENAME)?;
         serde_json::to_writer_pretty(BufWriter::new(file), self)?;
         Ok(())
     }
@@ -30,7 +33,7 @@ impl Config {
 
 #[cfg(test)]
 mod tests {
-    use crate::config::Config;
+    use crate::{config::Config, system::get_current_user_home_dir};
 
     #[tokio::test]
     async fn test_config() {
@@ -42,5 +45,10 @@ mod tests {
         println!("{:?}", config);
 
         config.save().unwrap()
+    }
+
+    #[test]
+    fn test() {
+        println!("{}", get_current_user_home_dir())
     }
 }

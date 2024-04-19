@@ -1,5 +1,11 @@
+use home::home_dir;
 use sysinfo::{Cpu, System, MINIMUM_CPU_UPDATE_INTERVAL};
 use tokio::time::sleep;
+
+pub fn get_current_user_home_dir() -> String {
+    let home_dir = home_dir().unwrap();
+    home_dir.to_string_lossy().into_owned() + "/"
+}
 
 pub struct Sys {
     system: System,
