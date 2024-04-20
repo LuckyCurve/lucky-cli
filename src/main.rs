@@ -38,18 +38,14 @@ enum WebsiteCommand {
     #[command(alias = "o")]
     Open {
         /// open index {from command list} url,
-        index: usize,
+        key: String,
     },
     /// add website that you favourite, can be shortened as "a"
     #[command(alias = "a")]
-    Add {
-        url: String,
-    },
+    Add { key: String, url: String },
     /// delete website that you have added, can be shortened as "d"
     #[command(alias = "d")]
-    Delete {
-        index: usize,
-    },
+    Delete { key: String },
 }
 
 impl WebsiteCommand {
@@ -60,36 +56,37 @@ impl WebsiteCommand {
 
         match self {
             WebsiteCommand::List => {
-                println!("{}\t\t{}", "index", "url");
-                config
-                    .website
-                    .iter()
-                    .enumerate()
-                    .into_iter()
-                    .for_each(|(index, url)| {
-                        println!("{}\t\t{}", index + 1, url);
-                    })
+                println!("{}\t\t{}", "key", "url");
+                config.website.iter().into_iter().for_each(|(key, url)| {
+                    println!("{}\t\t{}", key, url);
+                })
             }
-            WebsiteCommand::Open { index } => {
-                if let Some(url) = config.website.get(index - 1) {
+            WebsiteCommand::Open { key } => {
+                if let Some(url) = config.website.get(key) {
                     println!("get url:\t {}", url.to_string().bright_green());
                     open::that(url).unwrap();
                 } else {
                     println!("get url error!, index not right");
                 }
             }
-            WebsiteCommand::Add { url } => {
+            WebsiteCommand::Add { key, url } => {
                 if url.starts_with("http://") || url.starts_with("https://") {
-                    config.website.push(url.to_string());
+                    let removed_item = config.website.insert(key.to_owned(), url.to_owned());
                     println!("add url:\t {} success", url);
+                    if let Some(removed_url) = removed_item {
+                        println!("removed url:\t {} success", removed_url);
+                    }
+
                     config.save().unwrap();
                 } else {
                     println!("input {} {}", url, "error".bright_red());
                 }
             }
-            WebsiteCommand::Delete { index } => {
-                let removed_item = config.website.remove(index - 1);
-                println!("delete url:\t {} success", removed_item.to_string());
+            WebsiteCommand::Delete { key } => {
+                let removed_item = config.website.remove(key);
+                if let Some(removed_url) = removed_item {
+                    println!("delete url:\t {} success", removed_url.to_string());
+                }
                 config.save().unwrap();
             }
         }
@@ -173,6 +170,7 @@ mod tests {
     #[tokio::test]
     async fn test_main() {
         Command::Website(crate::WebsiteCommand::Add {
+            key: "1".to_string(),
             url: "http://www.baidu,com".to_string(),
         })
         .execute()

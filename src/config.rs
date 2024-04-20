@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
@@ -9,7 +10,7 @@ use crate::system;
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Config {
-    pub website: Vec<String>,
+    pub website: HashMap<String, String>,
 }
 
 impl Config {
