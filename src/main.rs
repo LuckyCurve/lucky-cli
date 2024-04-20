@@ -22,23 +22,31 @@ enum Command {
     IP,
     /// get current machine infomation
     System,
-    ///
-    #[clap(subcommand)]
+    /// manager your favorite site in one place! can be shortened with "web"
+    #[clap(subcommand, alias = "web")]
     Website(WebsiteCommand),
-    ///
+    /// see your current machine proxy infomation
     Proxy,
 }
 
 #[derive(Parser, Debug)]
 enum WebsiteCommand {
+    /// render website that you favourite, can be shortened as "l"
+    #[command(alias = "l")]
     List,
+    /// open website that you favourite, can be shortened as "o"
+    #[command(alias = "o")]
     Open {
         /// open index {from command list} url,
         index: usize,
     },
+    /// add website that you favourite, can be shortened as "a"
+    #[command(alias = "a")]
     Add {
         url: String,
     },
+    /// delete website that you have added, can be shortened as "d"
+    #[command(alias = "d")]
     Delete {
         index: usize,
     },
@@ -167,6 +175,7 @@ mod tests {
         Command::Website(crate::WebsiteCommand::Add {
             url: "http://www.baidu,com".to_string(),
         })
-        .execute().await;
+        .execute()
+        .await;
     }
 }
