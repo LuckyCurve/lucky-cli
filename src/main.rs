@@ -1,6 +1,7 @@
+use core::panic;
+
 use clap::Parser;
 use colored::Colorize;
-use sysproxy::Sysproxy;
 
 use crate::config::Config;
 use crate::system::Sys;
@@ -25,8 +26,6 @@ enum Command {
     /// manager your favorite site in one place! can be shortened with "web"
     #[clap(subcommand, alias = "web")]
     Website(WebsiteCommand),
-    /// see your current machine proxy infomation
-    Proxy,
 }
 
 #[derive(Parser, Debug)]
@@ -73,12 +72,18 @@ impl WebsiteCommand {
                 })
             }
             WebsiteCommand::Open { key } => {
-                if let Some(url) = config.website.get(key) {
-                    println!("get url:\t {}", url.to_string().bright_green());
-                    open::that(url).unwrap();
-                } else {
-                    println!("get url error!, index not right");
-                }
+                config
+                    .website
+                    .get(key)
+                    .map(|url| {
+                        println!("get url:\t {}", url.to_string().bright_green());
+                        open::that(url).unwrap_or_else(|e| {
+                            panic!("open url: {} error!\n error info {}", url, e);
+                        });
+                    })
+                    .unwrap_or_else(|| {
+                        panic!("get url error!, index not right");
+                    });
             }
             WebsiteCommand::Add { key, url } => {
                 if url.starts_with("http://") || url.starts_with("https://") {
@@ -157,11 +162,6 @@ impl Command {
             }
             Command::Website(website_command) => {
                 website_command.execute().await;
-            }
-            Command::Proxy => {
-                let result = Sysproxy::get_system_proxy().unwrap();
-                let sys_proxy = format!("{:?}", result);
-                println!("{}", sys_proxy.bright_green());
             }
         }
     }
