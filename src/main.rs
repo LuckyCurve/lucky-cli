@@ -57,7 +57,18 @@ impl WebsiteCommand {
         match self {
             WebsiteCommand::List => {
                 println!("{}\t\t{}", "key", "url");
-                config.website.iter().into_iter().for_each(|(key, url)| {
+                let mut res: Vec<(String, String)> = config.website.into_iter().collect();
+
+                res.sort_by(|(key1, _), (key2, _)| {
+                    let result1 = key1.parse::<i32>();
+                    let result2 = key2.parse::<i32>();
+
+                    result1
+                        .and_then(|value1| result2.and_then(|value2| Ok(value1.cmp(&value2))))
+                        .unwrap_or(key1.cmp(&key2))
+                });
+
+                res.iter().for_each(|(key, url)| {
                     println!("{}\t\t{}", key, url);
                 })
             }
