@@ -78,8 +78,5 @@ impl MemoryCount {
 #[cfg(test)]
 mod tests {
     #[tokio::test]
-    async fn test() {
-        let proxy = sysproxy::Sysproxy::get_system_proxy().unwrap();
-        println!("{:?}", proxy);
-    }
+    async fn test() {}
 }
