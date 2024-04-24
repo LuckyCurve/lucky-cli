@@ -1,4 +1,5 @@
 use core::panic;
+use std::collections::BTreeMap;
 
 use clap::Parser;
 use colored::Colorize;
@@ -9,6 +10,7 @@ use crate::system::Sys;
 mod config;
 mod network;
 mod system;
+mod template;
 
 #[derive(Parser, Debug)]
 #[command(version, about)]
@@ -56,7 +58,11 @@ impl WebsiteCommand {
         match self {
             WebsiteCommand::List => {
                 println!("{}\t\t{}", "key", "url");
-                let mut res: Vec<(String, String)> = config.website.into_iter().collect();
+                let mut res: Vec<(String, String)> = config
+                    .website
+                    .unwrap_or(BTreeMap::default())
+                    .into_iter()
+                    .collect();
 
                 res.sort_by(|(key1, _), (key2, _)| {
                     let result1 = key1.parse::<i32>();
@@ -74,6 +80,7 @@ impl WebsiteCommand {
             WebsiteCommand::Open { key } => {
                 config
                     .website
+                    .unwrap_or(BTreeMap::default())
                     .get(key)
                     .map(|url| {
                         println!("get url:\t {}", url.to_string().bright_green());
@@ -87,22 +94,27 @@ impl WebsiteCommand {
             }
             WebsiteCommand::Add { key, url } => {
                 if url.starts_with("http://") || url.starts_with("https://") {
-                    let removed_item = config.website.insert(key.to_owned(), url.to_owned());
+                    let mut website = config.website.unwrap_or_default();
+
                     println!("add url:\t {} success", url);
-                    if let Some(removed_url) = removed_item {
+                    if let Some(removed_url) = website.insert(key.to_owned(), url.to_owned()) {
                         println!("removed url:\t {} success", removed_url);
                     }
 
+                    config.website = Some(website);
                     config.save().unwrap();
                 } else {
                     println!("input {} {}", url, "error".bright_red());
                 }
             }
             WebsiteCommand::Delete { key } => {
-                let removed_item = config.website.remove(key);
-                if let Some(removed_url) = removed_item {
+                let mut website = config.website.unwrap_or(BTreeMap::default());
+
+                if let Some(removed_url) = website.remove(key) {
                     println!("delete url:\t {} success", removed_url.to_string());
                 }
+
+                config.website = Some(website);
                 config.save().unwrap();
             }
         }
@@ -184,7 +196,7 @@ mod tests {
             key: "1".to_string(),
             url: "http://www.baidu,com".to_string(),
         })
-        .execute()
-        .await;
+            .execute()
+            .await;
     }
 }

@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
@@ -10,7 +10,8 @@ use crate::system;
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Config {
-    pub website: BTreeMap<String, String>,
+    pub website: Option<BTreeMap<String, String>>,
+    pub code_template: Option<HashMap<String, String>>,
 }
 
 impl Config {
@@ -23,12 +24,24 @@ impl Config {
         Ok(result)
     }
 
-    pub fn save(&self) -> Result<()> {
+    pub fn save(&mut self) -> Result<()> {
+        self.set_default();
+
         let home_dir = system::get_current_user_home_dir();
         fs::create_dir_all(home_dir.clone() + Self::PATH)?;
         let file = File::create(home_dir + Self::PATH + Self::FILENAME)?;
         serde_json::to_writer_pretty(BufWriter::new(file), self)?;
         Ok(())
+    }
+
+    fn set_default(&mut self) {
+        if self.website.is_none() {
+            self.website = Some(BTreeMap::default());
+        }
+
+        if self.code_template.is_none() {
+            self.code_template = Some(HashMap::default());
+        }
     }
 }
 
@@ -38,14 +51,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_config() {
-        let config = Config::load().await.unwrap_or_else(|_| {
-            println!("load config failed");
+        let config = Config::load().await.unwrap_or_else(|e| {
+            println!("load config failed {}", e);
             Config::default()
         });
 
         println!("{:?}", config);
-
-        config.save().unwrap()
     }
 
     #[test]
