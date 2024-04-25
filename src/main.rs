@@ -108,7 +108,7 @@ impl WebsiteCommand {
                 }
             }
             WebsiteCommand::Delete { key } => {
-                let mut website = config.website.unwrap_or(BTreeMap::default());
+                let mut website = config.website.unwrap_or_default();
 
                 if let Some(removed_url) = website.remove(key) {
                     println!("delete url:\t {} success", removed_url.to_string());
@@ -125,8 +125,8 @@ impl Command {
     async fn execute(&self) {
         match self {
             Command::IP => {
-                let public_ip_future = tokio::spawn(async move { network::get_public_ip().await });
-                let local_ip_future = tokio::spawn(async move { network::get_local_ip().await });
+                let public_ip_future = tokio::spawn(async { network::get_public_ip().await });
+                let local_ip_future = tokio::spawn(async { network::get_local_ip().await });
                 println!("================ {} ================", "CURRENT IP".blue());
                 println!(
                     "public ip:\t{}",
@@ -196,7 +196,7 @@ mod tests {
             key: "1".to_string(),
             url: "http://www.baidu,com".to_string(),
         })
-            .execute()
-            .await;
+        .execute()
+        .await;
     }
 }
