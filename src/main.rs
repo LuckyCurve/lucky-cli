@@ -1,16 +1,13 @@
-use core::panic;
-use std::collections::BTreeMap;
-
 use clap::Parser;
 use colored::Colorize;
 
-use crate::config::Config;
+use crate::service::CommandExecute;
 use crate::system::Sys;
 
 mod config;
 mod network;
+mod service;
 mod system;
-mod template;
 
 #[derive(Parser, Debug)]
 #[command(version, about)]
@@ -28,6 +25,8 @@ enum Command {
     /// manager your favorite site in one place! can be shortened with "web"
     #[clap(subcommand, alias = "web")]
     Website(WebsiteCommand),
+    #[clap(subcommand, alias = "temp")]
+    Template(TemplateCommand),
 }
 
 #[derive(Parser, Debug)]
@@ -44,81 +43,24 @@ enum WebsiteCommand {
     /// add website that you favourite, can be shortened as "a"
     #[command(alias = "a")]
     Add { key: String, url: String },
-    /// delete website that you have added, can be shortened as "d"
-    #[command(alias = "d")]
-    Delete { key: String },
+    /// remove website that you have added, can be shortened as "d"
+    #[command(alias = "r")]
+    Remove { key: String },
 }
 
-impl WebsiteCommand {
-    pub async fn execute(&self) {
-        let mut config = Config::load().await.unwrap_or_else(|_| Config::default());
-
-        println!("================ {} ================", "WEBSITE".blue());
-
-        match self {
-            WebsiteCommand::List => {
-                println!("{}\t\t{}", "key", "url");
-                let mut res: Vec<(String, String)> = config
-                    .website
-                    .unwrap_or(BTreeMap::default())
-                    .into_iter()
-                    .collect();
-
-                res.sort_by(|(key1, _), (key2, _)| {
-                    let result1 = key1.parse::<i32>();
-                    let result2 = key2.parse::<i32>();
-
-                    result1
-                        .and_then(|value1| result2.and_then(|value2| Ok(value1.cmp(&value2))))
-                        .unwrap_or(key1.cmp(&key2))
-                });
-
-                res.iter().for_each(|(key, url)| {
-                    println!("{}\t\t{}", key, url);
-                })
-            }
-            WebsiteCommand::Open { key } => {
-                config
-                    .website
-                    .unwrap_or(BTreeMap::default())
-                    .get(key)
-                    .map(|url| {
-                        println!("get url:\t {}", url.to_string().bright_green());
-                        open::that(url).unwrap_or_else(|e| {
-                            panic!("open url: {} error!\n error info {}", url, e);
-                        });
-                    })
-                    .unwrap_or_else(|| {
-                        panic!("get url error!, index not right");
-                    });
-            }
-            WebsiteCommand::Add { key, url } => {
-                if url.starts_with("http://") || url.starts_with("https://") {
-                    let mut website = config.website.unwrap_or_default();
-
-                    println!("add url:\t {} success", url);
-                    if let Some(removed_url) = website.insert(key.to_owned(), url.to_owned()) {
-                        println!("removed url:\t {} success", removed_url);
-                    }
-
-                    config.website = Some(website);
-                    config.save().unwrap();
-                } else {
-                    println!("input {} {}", url, "error".bright_red());
-                }
-            }
-            WebsiteCommand::Delete { key } => {
-                let mut website = config.website.unwrap_or_default();
-
-                if let Some(removed_url) = website.remove(key) {
-                    println!("delete url:\t {} success", removed_url.to_string());
-                }
-
-                config.website = Some(website);
-                config.save().unwrap();
-            }
-        }
-    }
+#[derive(Debug, Parser)]
+enum TemplateCommand {
+    /// show all templates, can be shortened as "l"
+    #[command(alias = "l")]
+    List,
+    #[command(alias = "c")]
+    Choose { key: String },
+    #[command(alias = "a")]
+    Add { key: String },
+    #[command(alias = "r")]
+    Remove { key: String },
+    #[command(alias = "d")]
+    Detail { key: String },
 }
 
 impl Command {
@@ -174,6 +116,9 @@ impl Command {
             }
             Command::Website(website_command) => {
                 website_command.execute().await;
+            }
+            Command::Template(template) => {
+                template.execute().await;
             }
         }
     }

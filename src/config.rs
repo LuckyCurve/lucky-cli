@@ -18,10 +18,10 @@ impl Config {
     const PATH: &'static str = "lucky-config/";
     const FILENAME: &'static str = "global.json";
 
-    pub async fn load() -> Result<Config> {
-        let file = File::open(system::get_current_user_home_dir() + Self::PATH + Self::FILENAME)?;
-        let result: Config = serde_json::from_reader(BufReader::new(file))?;
-        Ok(result)
+    pub async fn load() -> Config {
+        File::open(system::get_current_user_home_dir() + Self::PATH + Self::FILENAME)
+            .map(|file| serde_json::from_reader(BufReader::new(file)).unwrap_or_default())
+            .unwrap_or_default()
     }
 
     pub fn save(&mut self) -> Result<()> {
