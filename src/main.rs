@@ -20,7 +20,7 @@ struct Cli {
 enum Command {
     /// get current machine ip, including all derives ip
     IP,
-    /// get current machine infomation
+    /// get current machine information
     System,
     /// manager your favorite site in one place! can be shortened with "web"
     #[clap(subcommand, alias = "web")]
@@ -139,9 +139,7 @@ mod tests {
     async fn test_main() {
         Command::Website(crate::WebsiteCommand::Add {
             key: "1".to_string(),
-            url: "http://www.baidu,com".to_string(),
-        })
-        .execute()
-        .await;
+            url: "https://www.baidu,com".to_string(),
+        }).execute().await;
     }
 }
